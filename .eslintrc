@@ -1,0 +1,29 @@
+{
+  "root": true,
+
+  "rules": {
+    "no-console":"warn",
+    "quotes": ["error", "double"],
+    "no-unused-expressions": "warn"
+  },
+
+  "parser": "@typescript-eslint/parser",
+  "parserOptions": {
+    "ecmaVersion": 2017
+  },
+
+  "plugins": [
+    "@typescript-eslint"
+  ],
+
+  "env": {
+    "es6": true
+  },
+
+  "extends": [
+    "eslint:recommended",
+    "plugin:@typescript-eslint/eslint-recommended",
+    "plugin:@typescript-eslint/recommended",
+    "prettier"
+  ]
+}

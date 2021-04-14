@@ -1,6 +1,33 @@
-$go: green;
-.hello{
-    color: red;
-    background-color: $go;
+$namespace: "_simple-slider";
 
+.#{$namespace}-root{
+    display: flex;
+    justify-content: center;
+    background-color: yellow;
+    color: green;
+    position:relative;
 }
+
+.#{$namespace}-navigation-button{
+    cursor: pointer;
+    width: 50px;
+    height: 50px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background-color: #fff;
+    border-radius: 50%;
+    margin-left: 15px;
+    transition: background-color .4s;
+    &:hover{
+        background-color: lightgrey;
+    }
+}
+
+.#{$namespace}-inner-component{
+    display: none;
+    &.active{
+        display: block;
+    }
+}
+
