@@ -47,7 +47,7 @@ $namespace: "_simple-slider";
 }
 
 .#{$namespace}-navigation-button {
-	$arrow-color: white;
+	$arrow-color: str-replace('' + #ffffff, '#', '%23');
 
 	cursor: pointer;
 	width: 50px;

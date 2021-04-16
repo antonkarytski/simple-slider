@@ -1,14 +1,17 @@
 {
   "name": "slider",
+  "homepage": "http://heyheyjude.github.io/simple-slider",
   "version": "1.0.0",
   "description": "simple slider",
   "main": "index.js",
   "scripts": {
+    "build": "webpack --mode production",
     "dev": "webpack --mode development",
-    "build": "wepback --mode producion",
     "watch": "webpack --mode development --watch",
     "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "npx webpack serve --mode development"
+    "start": "npx webpack serve --mode development",
+    "predeploy": "npm run build",
+    "deploy": "gh-pages -d dist"
   },
   "author": "",
   "license": "ISC",

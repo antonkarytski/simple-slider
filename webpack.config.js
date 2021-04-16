@@ -43,7 +43,7 @@ const cssEntry = {
 
 module.exports = {
  context: path.resolve(__dirname, "src"),
- mode: "development",
+ mode: "production",
  entry: {
   ...jsEntry,
 	...cssEntry
