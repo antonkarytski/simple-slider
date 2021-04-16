@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="`en`">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport"
+          content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <link href="simple-slider.css" rel="stylesheet">
+    <link href="style.css" rel="stylesheet">
+    <title>Document</title>
+<body>
+
+<h3>With all stuff:</h3>
+<div class="common-slider slider">
+    <img alt="img1" src="assets/img1.jpg"/>
+    <img alt="img2" src="assets/img2.jpg"/>
+    <img alt="img3" src="assets/img3.jpg"/>
+    <img alt="img4" src="assets/img4.jpg"/>
+    <img alt="img5" src="assets/img5.jpg"/>
+</div>
+
+<h3>Without loop:</h3>
+<div class="colored-slider slider">
+    <div class="colored-slide orange">Hello</div>
+    <div class="colored-slide pink">Hello</div>
+    <div class="colored-slide blue">Hello</div>
+    <div class="colored-slide dark-blue">Hello</div>
+</div>
+
+<h3>Only with dots navigation:</h3>
+<div class="common-slider-with-dots slider">
+    <img alt="img1" src="assets/img1.jpg"/>
+    <img alt="img2" src="assets/img2.jpg"/>
+    <img alt="img3" src="assets/img3.jpg"/>
+    <img alt="img4" src="assets/img4.jpg"/>
+    <img alt="img5" src="assets/img5.jpg"/>
+</div>
+
+
+<script src="SimpleSlider.js"></script>
+<script>
+ const slider = new SimpleSlider(".common-slider");
+ const slider2 = new SimpleSlider(".colored-slider", {
+	isLooped: false,
+ })
+ const slider3 = new SimpleSlider(".common-slider-with-dots", {
+	isLooped: false,
+	isShowNavigationButtons: false,
+	isDraggable: false,
+ })
+</script>
+</body>
+</html>
