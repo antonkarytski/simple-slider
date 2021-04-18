@@ -12,7 +12,7 @@ import {
 import cx from "./helpers/classNameHelper"
 import slideWrapper from "./components/slideWrapper";
 import navigationButton from "./components/navigationButton";
-import {EffectHandlerInterface, EffectsList, effectsList} from "./handlers/handler.effect";
+import {EffectHandlerInterface, EffectsHandler, EffectsList, effectsList} from "./handlers/handler.effect";
 import createDragHandler from "./handlers/handler.drag";
 import createDotsBlock from "./components/dotsBlock";
 
@@ -76,9 +76,13 @@ class SimpleSlider {
 		this.currentSlideIndex = startSlide;
 		this.selector = selector;
 		this.effect = Object.keys(effectsList).includes(effect) ? effect : defaultOptions.effect;
-		this.effectHandler = effectsList[this.effect](this.slider, {
+		console.log(effectsList[this.effect])
+		const {handler: getEffectHandler} = effectsList[this.effect] as {handler: EffectsHandler}
+
+		this.effectHandler = getEffectHandler(this.slider, {
 			afterTransition: this.afterTransitionHandler.bind(this)
 		});
+		console.log(this.effectHandler)
 		this.isLooped = isLooped;
 
 		const slides = [...this.slider.children];
