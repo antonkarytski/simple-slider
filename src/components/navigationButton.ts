@@ -1,14 +1,12 @@
 import {BUTTON_CLASS} from "../classes";
+import {Props, Component} from "./_interfaces";
 import cx from "../helpers/classNameHelper"
 
-type buttonProps = {
- onClick: () => unknown,
- classes:string
+const navigationButton:Component = ({className = "", onClick}:Props) => {
+ const button = document.createElement("div")
+ button.className = cx(BUTTON_CLASS, className)
+ button.addEventListener("click", onClick)
+ return {element: button}
 }
 
-export default function navigationButton({classes = "", onClick}:buttonProps): HTMLElement {
- const button = document.createElement("div")
- button.className = cx(BUTTON_CLASS, classes)
- button.addEventListener("click", () => onClick())
- return button
-}
+export default navigationButton

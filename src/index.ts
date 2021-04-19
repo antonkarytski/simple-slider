@@ -11,8 +11,6 @@ import {
   PREVENT_TRANSITION_EFFECT_CLASS,
 } from "./classes";
 import cx from "./helpers/classNameHelper";
-import slideWrapper from "./components/slideWrapper";
-import navigationButton from "./components/navigationButton";
 import {
   EffectHandlerInterface,
   EffectsList,
@@ -20,7 +18,12 @@ import {
   effectsList,
 } from "./handlers/handler.effect";
 import createDragHandler from "./handlers/handler.drag";
-import createDotsBlock from "./components/dotsBlock";
+import createDotsBlock, { DotsBlockProps } from "./components/dotsBlock";
+import {
+  addButtons,
+  setActiveElement,
+  wrapChildComponents,
+} from "./helpers/componentsHelper";
 
 declare global {
   interface Window {
@@ -108,13 +111,10 @@ class SimpleSlider {
       effectRootClass
     );
 
-    slides.forEach((slide: HTMLElement, index) => {
-      const wrapperClasses = cx({
-        [innerComponentClass]: !!innerComponentClass,
-        [ACTIVE_CLASS]: index === startSlide,
+    wrapChildComponents(this.slider, (index) => {
+      return cx(innerComponentClass, {
+        [ACTIVE_CLASS]: index === this.currentSlideIndex,
       });
-      const slideWrap = slideWrapper(slide, wrapperClasses);
-      this.slider.append(slideWrap);
     });
 
     this.effectHandler.prepare(startSlide);
@@ -122,41 +122,26 @@ class SimpleSlider {
 
     if (isDraggable) {
       createDragHandler(this.slider, {
-        onDragSuccess: (direction) => {
-          if (
-            this.currentSlideIndex + direction >= 0 &&
-            this.currentSlideIndex + direction < slides.length
-          ) {
-            this.goToNextSlide.bind(this);
-          }
-        },
+        onDragSuccess: this.goToNextSlide.bind(this),
       });
     }
 
     if (isShowNavigationButtons) {
-      this.slider.append(
-        navigationButton({
+      const buttons = [
+        {
           onClick: () => this.goToNextSlide(-1),
-          classes: cx(BUTTON_LEFT_CLASS, {
-            [buttonClasses]: !!buttonClasses,
-            [leftButtonClass]: !!leftButtonClass,
-          }),
-        })
-      );
-
-      this.slider.append(
-        navigationButton({
+          className: cx(leftButtonClass, BUTTON_LEFT_CLASS),
+        },
+        {
           onClick: () => this.goToNextSlide(1),
-          classes: cx(BUTTON_RIGHT_CLASS, {
-            [buttonClasses]: !!buttonClasses,
-            [rightButtonClass]: !!rightButtonClass,
-          }),
-        })
-      );
+          className: cx(rightButtonClass, BUTTON_RIGHT_CLASS),
+        },
+      ];
+      addButtons(this.slider, buttons, buttonClasses);
     }
 
     if (isShowDots) {
-      const dotsBlock = createDotsBlock({
+      const { element, update } = createDotsBlock({
         onClick: ({ target }) => {
           if (target instanceof HTMLElement) {
             this.setCurrentSlide(Number(target.dataset.slide));
@@ -164,32 +149,19 @@ class SimpleSlider {
         },
         dotCount: this.slidesCount,
         initialActiveDot: this.currentSlideIndex,
-      });
-      this.slider.append(dotsBlock.element);
-      this.onSlideChangeListeners.push(dotsBlock.update);
+      } as DotsBlockProps);
+      this.slider.append(element);
+      this.onSlideChangeListeners.push(update);
     }
   }
 
   setCurrentSlide(slideNumber: number): void {
     if (slideNumber === this.currentSlideIndex) return;
-    if (
-	    slideNumber < 0 ||
-	    slideNumber > this.slidesCount - 1
-      // slideNumber < 0 - Number(this.isLooped) ||
-      // slideNumber > this.slidesCount + Number(this.isLooped) - 1
-    )
-      return;
+    if (slideNumber < 0 || slideNumber > this.slidesCount - 1) return;
     this.currentSlideIndex = slideNumber;
 
     const slides = this.slider.querySelectorAll(`.${WRAPPER_CLASS}`);
-    slides.forEach((slide, index) => {
-      if (slide.classList.contains(ACTIVE_CLASS))
-        slide.classList.remove(ACTIVE_CLASS);
-      if (
-	      index === this.currentSlideIndex)
-      	//index === this.currentSlideIndex + Number(this.isLooped))
-        slide.classList.add(ACTIVE_CLASS);
-    });
+    setActiveElement(slides, this.currentSlideIndex, ACTIVE_CLASS);
     this.onSlideChangeListeners.forEach((listener) =>
       listener(this.getNextSlideIndex())
     );
@@ -197,41 +169,32 @@ class SimpleSlider {
 
   goToNextSlide(direction: number): void {
     const nextIndex = this.currentSlideIndex + direction;
-    if (!this.isLooped && (nextIndex < 0 || nextIndex > this.slidesCount - 1))
-      return;
+    if (nextIndex < 0 || nextIndex > this.slidesCount - 1) return;
     this.setCurrentSlide(nextIndex);
   }
 
-  afterTransitionHandler({ target }) {
+  afterTransitionHandler({ target: { classList } }): void {
+    if (!classList.contains(WRAPPER_CLASS) || !classList.contains(ACTIVE_CLASS))
+      return;
     if (
-      target.classList.contains(WRAPPER_CLASS) &&
-      target.classList.contains(ACTIVE_CLASS)
+      this.currentSlideIndex < 0 ||
+      this.currentSlideIndex > this.slidesCount - 1
     ) {
-      if (
-        this.currentSlideIndex < 0 ||
-        this.currentSlideIndex > this.slidesCount - 1
-      ) {
-        this.slider.classList.add(PREVENT_TRANSITION_EFFECT_CLASS);
-        this.setCurrentSlide(this.getNextSlideIndex());
-        setTimeout(() =>
-          this.slider.classList.remove(PREVENT_TRANSITION_EFFECT_CLASS)
-        );
-      }
+      this.slider.classList.add(PREVENT_TRANSITION_EFFECT_CLASS);
+      this.setCurrentSlide(this.getNextSlideIndex());
+      setTimeout(() =>
+        this.slider.classList.remove(PREVENT_TRANSITION_EFFECT_CLASS)
+      );
     }
   }
 
   getNextSlideIndex() {
-    if (
-      this.currentSlideIndex >= 0 &&
-      this.currentSlideIndex <= this.slidesCount - 1
-    )
-      return this.currentSlideIndex;
-    if (this.isLooped) {
-      if (this.currentSlideIndex < 0) return this.slidesCount - 1;
-      return 1;
+    const { currentSlideIndex: currentIndex, slidesCount } = this;
+    if (currentIndex >= 0 && currentIndex <= slidesCount - 1) {
+      return currentIndex;
     }
-    if (this.currentSlideIndex < 0) return 0;
-    return this.slidesCount - 1;
+    if (currentIndex < 0) return 0;
+    return slidesCount - 1;
   }
 }
 

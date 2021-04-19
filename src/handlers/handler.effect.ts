@@ -75,24 +75,16 @@ const moveEffectHandler: EffectsHandler = (
       },
       onDrag: (offset) => {
         firstSlide.style.marginLeft = `-${
-          activeSlideIndex * slideWidth + offset
+          (activeSlideIndex + Number(isLooped)) * slideWidth + offset
         }px`;
       },
       onDragEnd: () => {
         slider.classList.remove(PREVENT_TRANSITION_EFFECT_CLASS);
       },
-      onDragSuccess: (direction) => {
-        if (
-          activeSlideIndex + direction >= 0 &&
-          activeSlideIndex + direction < slides.length
-        ) {
-          moveSlide();
-        }
-      },
       onDragReject: () => {
         const firstSlide = slides[0] as HTMLElement;
         const slideWidth = firstSlide.getBoundingClientRect().width;
-        firstSlide.style.marginLeft = `-${activeSlideIndex * slideWidth}px`;
+        firstSlide.style.marginLeft = `-${(activeSlideIndex + Number(isLooped)) * slideWidth}px`;
       },
     });
   }
