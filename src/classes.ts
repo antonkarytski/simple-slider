@@ -13,3 +13,4 @@ export const DOT_CLASS = "dot"
 export const DOT_BLOCK_CLASS = prefix`dot-block`
 
 export const EFFECT_MOVE = "move"
+export const EFFECT_MOVE_ROOT_CLASS = prefix`effect-move-root`

@@ -26,8 +26,8 @@ export default function dotsBlock({onClick, dotCount, classes, initialActiveDot}
 			onClick(event)
 		}
 	})
-	for(let i = 0; i<dotCount; i++){
-		element.append(dot(i, cx({[ACTIVE_CLASS]:initialActiveDot === i + 1})))
+	for(let i = 0; i < dotCount; i++){
+		element.append(dot(i, cx({[ACTIVE_CLASS]:initialActiveDot === i})))
 	}
 
 

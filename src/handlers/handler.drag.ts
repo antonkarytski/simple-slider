@@ -1,77 +1,90 @@
-import {BUTTON_CLASS, DOT_CLASS, PREVENT_TRANSITION_EFFECT_CLASS, WRAPPER_CLASS} from "../classes";
+import {
+  BUTTON_CLASS,
+  DOT_CLASS,
+} from "../classes";
 
-type MoveEvent = MouseEvent | DragEvent | TouchEvent;
+type MoveEvent = MouseEvent | TouchEvent;
 type Actions = {
-	onDrag:(slideNumber:number) => void
-	onDragToNextSlide:(direction: number) => void
+  onDragStart?: () => void;
+  onDrag?: (offset: number) => void;
+  onDragEnd?: () => void;
+  onDragSuccess?: (direction: number) => void;
+  onDragReject?: () => void;
+};
+
+export default function dragHandler(
+  slider: HTMLElement,
+  {
+	  onDragStart = null,
+    onDrag = null,
+    onDragSuccess = null,
+	  onDragEnd = null,
+    onDragReject = null,
+  }: Actions
+): void {
+
+
+  let cursorStartPosition = 0;
+  let offset = 0;
+  let isDragStart = false;
+
+  function dragStart(event: MoveEvent) {
+	  if(event.path.includes(slider)){
+		  if(event.type === "mousemove") event.preventDefault();
+		  isDragStart = true
+		  cursorStartPosition = getCursorPosition(event);
+		  if (onDragStart) onDragStart();
+	  }
+  }
+
+  function dragAction(event: MoveEvent) {
+	  if(!isDragStart) return
+	  if(event.type === "mousemove") event.preventDefault();
+    offset = cursorStartPosition - getCursorPosition(event);
+    if (onDrag) onDrag(offset);
+  }
+
+  function dragEnd() {
+  	if(!isDragStart) return
+	  isDragStart = false
+  	if(onDragEnd) onDragEnd()
+    if (slider.offsetWidth / 5 < Math.abs(offset)) {
+      if(onDragSuccess) onDragSuccess(Math.sign(offset))
+    } else {
+	    if(onDragReject) onDragReject()
+    }
+  }
+
+  function isNotChildNavigation(target) {
+    return (
+      target instanceof HTMLElement &&
+      !target.classList.contains(DOT_CLASS) &&
+      !target.classList.contains(BUTTON_CLASS)
+    );
+  }
+
+
+
+
+  window.addEventListener("touchstart", (event) => {
+    if (isNotChildNavigation(event.target)) dragStart(event);
+  });
+	window.addEventListener("touchmove", dragAction);
+	window.addEventListener("touchend", dragEnd);
+
+	window.addEventListener("mousedown", (event) => {
+		if (isNotChildNavigation(event.target)) dragStart(event);
+	});
+	window.addEventListener("mousemove", dragAction);
+	window.addEventListener("mouseup", dragEnd);
+
+
+
 }
 
-
-export default function dragHandler(slider: HTMLElement, {onDragToNextSlide}: Actions): void{
-
-	const [...slides] = slider.querySelectorAll(`.${WRAPPER_CLASS}`)
-	let cursorStartPosition = 0;
-	let firstElementStartPosition = 0;
-	let offset = 0;
-
-	function dragStart(event:MoveEvent){
-		event.preventDefault()
-		const firstSlide = slides[0] as HTMLElement
-		firstElementStartPosition = firstSlide.offsetLeft
-		cursorStartPosition = getCursorPosition(event)
-		slider.classList.add(PREVENT_TRANSITION_EFFECT_CLASS)
-		document.onmousemove = dragAction;
-		document.onmouseup = dragEnd;
-	}
-
-	function dragAction(event:MoveEvent){
-		event.preventDefault()
-		offset = cursorStartPosition - getCursorPosition(event)
-		slides.forEach((slide:HTMLElement, index) => {
-			const position = firstElementStartPosition + slide.offsetWidth * index - offset;
-			slide.style.left = position + "px"
-		})
-	}
-
-	function dragEnd(){
-		slider.classList.remove(PREVENT_TRANSITION_EFFECT_CLASS)
-		const firstSlide = slides[0] as HTMLElement
-		const lastSlide = slides[slides.length-1] as HTMLElement
-		if(slider.offsetWidth/5 < Math.abs(offset)
-			&& firstSlide.offsetLeft <= 0
-			&& lastSlide.offsetLeft >= 0
-		){
-			onDragToNextSlide(Math.sign(offset))
-		} else {
-			slides.forEach((slide:HTMLElement, index) => {
-				const position = firstElementStartPosition + slide.offsetWidth * index;
-				slide.style.left = position + "px"
-			})
-		}
-
-		document.onmousemove = null;
-		document.onmouseup = null;
-	}
-
-	function isNotChildNavigation(target){
-		return target instanceof HTMLElement
-			&& !target.classList.contains(DOT_CLASS)
-			&& !target.classList.contains(BUTTON_CLASS)
-	}
-
-	slider.addEventListener("mousedown", (event) => {
-		if (isNotChildNavigation(event.target)) dragStart(event)
-	})
-	slider.addEventListener("touchstart", (event) => {
-		if (isNotChildNavigation(event.target)) dragStart(event)
-	})
-	slider.addEventListener("touchmove", dragAction)
-	slider.addEventListener("touchend",dragEnd)
-}
-
-function getCursorPosition(event: MoveEvent): number{
-	if(event instanceof TouchEvent){
-		return event.touches[0].clientX
-	}
-	return event.clientX
+function getCursorPosition(event: MoveEvent): number {
+  if (event instanceof TouchEvent) {
+    return event.touches[0].clientX;
+  }
+  return event.clientX;
 }

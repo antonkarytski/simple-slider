@@ -4,19 +4,6 @@ const RemovePlugin = require('remove-files-webpack-plugin');
 
 //const HTMLWebpackPlugin = require("html-webpack-plugin")
 
-function getCssLoader(pattern, loaders = []){
- return {
-	test: pattern,
-	use: [
-	 {
-		loader: MiniCssExtractPlugin.loader,
-		options: {},
-	 },
-	 "css-loader",
-	 ...loaders],
- }
-}
-
 function getBabelLoader(pattern, presets = []){
  return {
 	test: pattern,
@@ -33,7 +20,7 @@ function getBabelLoader(pattern, presets = []){
 
 
 const jsEntry = {
- SimpleSlider: ["@babel/polyfill", "./index.ts"]
+
 }
 
 const cssEntry = {
@@ -45,7 +32,9 @@ module.exports = {
  context: path.resolve(__dirname, "src"),
  mode: "production",
  entry: {
-  ...jsEntry,
+	"simple-slider.js": {import:["@babel/polyfill", "./index.ts"],
+	 filename: "[name]",
+	},
 	...cssEntry
  },
  output: {
@@ -56,7 +45,7 @@ module.exports = {
 	path: path.resolve(__dirname, "dist"),
  },
  resolve: {
-	extensions: [".js", ".jsx", ".wasm", ".ts", ".tsx"],
+	extensions: [".js", ".jsx", ".wasm", ".ts", ".tsx", ".module.scss"],
  },
  plugins: [
 	// new HTMLWebpackPlugin({
@@ -78,7 +67,7 @@ module.exports = {
 	new MiniCssExtractPlugin({
 	 filename: (entry) => {
 	  if(Object.keys(cssEntry).includes(entry.chunk.name)) return "[name].css"
-		return "![name].delete"
+		return "[name].delete"
 	 },
 	}),
  ],
@@ -94,8 +83,14 @@ module.exports = {
  },
  module: {
 	rules: [
-	 getCssLoader(/\.css$/),
-	 getCssLoader(/\.s[ac]ss$/, ["sass-loader"]),
+	 {
+		test: /\.(sa|sc|c)ss$/,
+		use: [
+		 MiniCssExtractPlugin.loader,
+		 "css-loader",
+		 'sass-loader',
+		],
+	 },
 	 getBabelLoader(/\.m?js$/),
 	 getBabelLoader(/\.ts$/, ["@babel/preset-typescript"]),
 	 {
