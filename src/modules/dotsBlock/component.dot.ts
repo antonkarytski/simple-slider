@@ -1,6 +1,6 @@
-import cx from "../helpers/classNameHelper";
-import {Component, Props} from "./_interfaces";
-import {DOT_CLASS} from "../classes";
+import cx from "../../helpers/classNameHelper";
+import {Component, Props} from "../../_interfaces";
+import {DOT_CLASS} from "../../classes";
 
 export interface DotProps extends Props{
 	index: number

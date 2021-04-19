@@ -1,9 +1,6 @@
 import createSlideWrapper, {
   SlideWrapperProps,
 } from "../components/slideWrapper";
-import navigationButton from "../components/navigationButton";
-import cx from "./classNameHelper";
-import { Props } from "../components/_interfaces";
 
 export function cloneElement(
   element: HTMLElement,
@@ -39,20 +36,16 @@ export function wrapChildComponents(
       content: slide,
       className: typeof className === "string" ? className : className(index),
     } as SlideWrapperProps);
-    parent.append(slideWrap);
+    insertElements(parent, slideWrap)
   });
 }
 
-export function addButtons(
-  parent: HTMLElement,
-  buttons: Props[],
-  generalClassName: string
-): void {
-  buttons.forEach(({ onClick, className }) => {
-    const { element } = navigationButton({
-      onClick,
-      className: cx(className, generalClassName),
-    });
-    parent.append(element);
-  });
+export function insertElements(parent:HTMLElement, childCollection: HTMLElement | HTMLElement[]): HTMLElement{
+  if(Array.isArray(childCollection)){
+    childCollection.forEach((child) => parent.append(child))
+  }else{
+    parent.append(childCollection);
+  }
+  return parent
+
 }

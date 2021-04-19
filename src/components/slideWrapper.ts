@@ -1,6 +1,6 @@
 import cx from "../helpers/classNameHelper";
 import {WRAPPER_CLASS} from "../classes";
-import {Component, Props} from "./_interfaces";
+import {Component, Props} from "../_interfaces";
 
 export interface SlideWrapperProps extends Props{
 	content: HTMLElement

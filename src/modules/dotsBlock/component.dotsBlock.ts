@@ -1,7 +1,8 @@
-import { ACTIVE_CLASS, DOT_BLOCK_CLASS, DOT_CLASS } from "../classes";
-import createDot, {DotProps} from "./dot";
-import cx from "../helpers/classNameHelper";
-import {Component, Props} from "./_interfaces";
+import { ACTIVE_CLASS, DOT_BLOCK_CLASS, DOT_CLASS } from "../../classes";
+import createDot, {DotProps} from "./component.dot";
+import cx from "../../helpers/classNameHelper";
+import {Component, Props} from "../../_interfaces";
+import {insertElements} from "../../helpers/componentsHelper";
 
 export interface DotsBlockProps extends Props {
   dotCount: number;
@@ -32,7 +33,7 @@ const dotsBlock:Component = ({
       index,
       className: cx({ [ACTIVE_CLASS]: initialActiveDot === index }),
     } as DotProps)
-    element.append(dot);
+    insertElements(element, dot)
   }
 
   return {

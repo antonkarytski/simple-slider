@@ -63,9 +63,6 @@ export default function dragHandler(
     );
   }
 
-
-
-
   window.addEventListener("touchstart", (event) => {
     if (isNotChildNavigation(event.target)) dragStart(event);
   });
@@ -77,9 +74,6 @@ export default function dragHandler(
 	});
 	window.addEventListener("mousemove", dragAction);
 	window.addEventListener("mouseup", dragEnd);
-
-
-
 }
 
 function getCursorPosition(event: MoveEvent): number {

@@ -1,6 +1,6 @@
-import {BUTTON_CLASS} from "../classes";
-import {Props, Component} from "./_interfaces";
-import cx from "../helpers/classNameHelper"
+import {BUTTON_CLASS} from "../../classes";
+import {Props, Component} from "../../_interfaces";
+import cx from "../../helpers/classNameHelper"
 
 const navigationButton:Component = ({className = "", onClick}:Props) => {
  const button = document.createElement("div")

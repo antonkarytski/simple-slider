@@ -3,12 +3,10 @@ import "./dist-style.scss";
 import {
   ACTIVE_CLASS,
   BASIC_CLASSNAME,
-  BUTTON_LEFT_CLASS,
-  BUTTON_RIGHT_CLASS,
   EFFECT_MOVE,
   ROOT_COMPONENT_CLASS,
   WRAPPER_CLASS,
-  PREVENT_TRANSITION_EFFECT_CLASS,
+  WRAPPER_LOOP_CLASS,
 } from "./classes";
 import cx from "./helpers/classNameHelper";
 import {
@@ -16,14 +14,15 @@ import {
   EffectsList,
   Effect,
   effectsList,
-} from "./handlers/handler.effect";
+} from "./handlers/effect.move";
 import createDragHandler from "./handlers/handler.drag";
-import createDotsBlock, { DotsBlockProps } from "./components/dotsBlock";
 import {
-  addButtons,
   setActiveElement,
   wrapChildComponents,
 } from "./helpers/componentsHelper";
+import { IndexSubscriber, SliderModule } from "./_interfaces";
+import createDotsBlockModule from "./modules/dotsBlock/module.dotsBlock";
+import createNavigationButtonsModule from "./modules/navigationButton/module.navigationButtons";
 
 declare global {
   interface Window {
@@ -53,7 +52,7 @@ const defaultOptions: SliderOptions = {
   isLooped: true,
 };
 
-class SimpleSlider {
+export class SimpleSlider {
   slider: HTMLElement;
   currentSlideIndex: number;
   slidesCount: number;
@@ -61,7 +60,10 @@ class SimpleSlider {
   effect: string;
   isLooped: boolean;
   effectHandler: EffectHandlerInterface;
-  onSlideChangeListeners: Array<(activeIndex?: number) => void> = [];
+  onSlideChangeListeners: Array<IndexSubscriber> = [];
+  onSlideBeforeChangeListeners: Array<IndexSubscriber> = [];
+  navigationButtonsModule: SliderModule
+  dotsBlockModule: SliderModule
 
   constructor(
     selector = BASIC_CLASSNAME,
@@ -97,13 +99,10 @@ class SimpleSlider {
       rootClass: effectRootClass,
     } = effectsList[this.effect] as Effect;
 
-    this.effectHandler = getEffectHandler(
-      this.slider,
-      {
-        afterTransition: this.afterTransitionHandler.bind(this),
-      },
-      { isLooped: this.isLooped, isDraggable }
-    );
+    this.effectHandler = getEffectHandler(this.slider, {
+      isLooped: this.isLooped,
+      isDraggable,
+    });
 
     this.slider.className = cx(
       this.slider.className,
@@ -117,85 +116,61 @@ class SimpleSlider {
       });
     });
 
-    this.effectHandler.prepare(startSlide);
-    this.onSlideChangeListeners.push(this.effectHandler.update);
+    const { prepare, update, beforeUpdate } = this.effectHandler;
+    prepare(startSlide);
+    if (update) this.onSlideChangeListeners.push(update);
+    if (beforeUpdate) this.onSlideBeforeChangeListeners.push(beforeUpdate);
+
+    this.navigationButtonsModule = createNavigationButtonsModule(this);
+    this.dotsBlockModule = createDotsBlockModule(this);
 
     if (isDraggable) {
       createDragHandler(this.slider, {
-        onDragSuccess: this.goToNextSlide.bind(this),
+        onDragSuccess: this.goToNextSlide,
       });
     }
 
     if (isShowNavigationButtons) {
-      const buttons = [
-        {
-          onClick: () => this.goToNextSlide(-1),
-          className: cx(leftButtonClass, BUTTON_LEFT_CLASS),
-        },
-        {
-          onClick: () => this.goToNextSlide(1),
-          className: cx(rightButtonClass, BUTTON_RIGHT_CLASS),
-        },
-      ];
-      addButtons(this.slider, buttons, buttonClasses);
+      this.navigationButtonsModule.create({
+        leftButtonClass,
+        rightButtonClass,
+        buttonClasses,
+      });
     }
 
     if (isShowDots) {
-      const { element, update } = createDotsBlock({
-        onClick: ({ target }) => {
-          if (target instanceof HTMLElement) {
-            this.setCurrentSlide(Number(target.dataset.slide));
-          }
-        },
-        dotCount: this.slidesCount,
-        initialActiveDot: this.currentSlideIndex,
-      } as DotsBlockProps);
-      this.slider.append(element);
+      const { update } = this.dotsBlockModule.create();
       this.onSlideChangeListeners.push(update);
     }
   }
 
-  setCurrentSlide(slideNumber: number): void {
+  setCurrentSlide = (slideNumber: number): void => {
     if (slideNumber === this.currentSlideIndex) return;
     if (slideNumber < 0 || slideNumber > this.slidesCount - 1) return;
+    const savedSlideIndex = this.currentSlideIndex;
     this.currentSlideIndex = slideNumber;
-
-    const slides = this.slider.querySelectorAll(`.${WRAPPER_CLASS}`);
+    const slides = this.slider.querySelectorAll(
+      `.${WRAPPER_CLASS}:not(.${WRAPPER_LOOP_CLASS})`
+    );
     setActiveElement(slides, this.currentSlideIndex, ACTIVE_CLASS);
     this.onSlideChangeListeners.forEach((listener) =>
-      listener(this.getNextSlideIndex())
+      listener(this.currentSlideIndex, savedSlideIndex)
     );
-  }
+  };
 
-  goToNextSlide(direction: number): void {
-    const nextIndex = this.currentSlideIndex + direction;
-    if (nextIndex < 0 || nextIndex > this.slidesCount - 1) return;
-    this.setCurrentSlide(nextIndex);
-  }
-
-  afterTransitionHandler({ target: { classList } }): void {
-    if (!classList.contains(WRAPPER_CLASS) || !classList.contains(ACTIVE_CLASS))
-      return;
-    if (
-      this.currentSlideIndex < 0 ||
-      this.currentSlideIndex > this.slidesCount - 1
-    ) {
-      this.slider.classList.add(PREVENT_TRANSITION_EFFECT_CLASS);
-      this.setCurrentSlide(this.getNextSlideIndex());
-      setTimeout(() =>
-        this.slider.classList.remove(PREVENT_TRANSITION_EFFECT_CLASS)
-      );
-    }
-  }
-
-  getNextSlideIndex() {
-    const { currentSlideIndex: currentIndex, slidesCount } = this;
-    if (currentIndex >= 0 && currentIndex <= slidesCount - 1) {
-      return currentIndex;
-    }
-    if (currentIndex < 0) return 0;
-    return slidesCount - 1;
-  }
+  goToNextSlide = (direction: number): void => {
+    const { currentSlideIndex, slidesCount, isLooped, setCurrentSlide } = this;
+    const nextIndex = currentSlideIndex + direction;
+    const lastIndex = slidesCount - 1;
+    const nextSlideIndex = (() => {
+      if (nextIndex < 0) return isLooped ? lastIndex : 0;
+      if (nextIndex > lastIndex) return isLooped ? 0 : lastIndex;
+      return nextIndex;
+    })();
+    setCurrentSlide(nextSlideIndex);
+  };
 }
 
 window.SimpleSlider = SimpleSlider;
+
+
