@@ -53,6 +53,7 @@ export default function dragHandler(
     } else {
 	    if(onDragReject) onDragReject()
     }
+	  offset = 0
   }
 
   function isNotChildNavigation(target) {

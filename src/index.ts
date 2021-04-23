@@ -17,6 +17,7 @@ import {
 } from "./handlers/effect.move";
 import createDragHandler from "./handlers/handler.drag";
 import {
+  insertElements,
   setActiveElement,
   wrapChildComponents,
 } from "./helpers/componentsHelper";
@@ -33,14 +34,14 @@ declare global {
 type SliderOptions = {
   startSlide: number;
   innerComponentClass?: string;
-  buttonClasses?: string;
-  leftButtonClass?: string;
-  rightButtonClass?: string;
   effect?: keyof EffectsList;
   isShowDots: boolean;
   isShowNavigationButtons: boolean;
   isDraggable: boolean;
   isLooped: boolean;
+  buttonClasses?: string;
+  leftButtonClass?: string;
+  rightButtonClass?: string;
 };
 
 const defaultOptions: SliderOptions = {
@@ -57,13 +58,16 @@ export class SimpleSlider {
   currentSlideIndex: number;
   slidesCount: number;
   selector: string;
-  effect: string;
+  effect: keyof EffectsList;
   isLooped: boolean;
+  isDraggable: boolean;
   effectHandler: EffectHandlerInterface;
-  onSlideChangeListeners: Array<IndexSubscriber> = [];
-  onSlideBeforeChangeListeners: Array<IndexSubscriber> = [];
-  navigationButtonsModule: SliderModule
-  dotsBlockModule: SliderModule
+  onSlideChangeListeners: IndexSubscriber[] = [];
+  onSlideBeforeChangeListeners: IndexSubscriber[] = [];
+  navigationButtonsModule: SliderModule;
+  dotsBlockModule: SliderModule;
+
+  isOnOverload = false;
 
   constructor(
     selector = BASIC_CLASSNAME,
@@ -72,27 +76,24 @@ export class SimpleSlider {
     const {
       innerComponentClass,
       startSlide,
-      buttonClasses,
-      rightButtonClass,
-      leftButtonClass,
       effect,
       isShowNavigationButtons,
       isShowDots,
       isDraggable,
       isLooped,
+      ...navigationButtonClasses
     } = { ...defaultOptions, ...options };
 
     this.slider = document.querySelector(selector);
-    const slides = [...this.slider.children];
-
+    this.isLooped = isLooped;
+    this.isDraggable = isDraggable;
+    this.selector = selector;
+    this.slidesCount = this.slider.children.length;
+    this.currentSlideIndex = startSlide;
+    this.effect = effect;
     this.effect = Object.keys(effectsList).includes(effect)
       ? effect
       : defaultOptions.effect;
-
-    this.isLooped = isLooped;
-    this.selector = selector;
-    this.slidesCount = slides.length;
-    this.currentSlideIndex = startSlide;
 
     const {
       handler: getEffectHandler,
@@ -102,6 +103,12 @@ export class SimpleSlider {
     this.effectHandler = getEffectHandler(this.slider, {
       isLooped: this.isLooped,
       isDraggable,
+      beforeOverloadTransition: () => {
+        this.isOnOverload = true;
+      },
+      afterOverloadTransition: () => {
+        this.isOnOverload = false;
+      },
     });
 
     this.slider.className = cx(
@@ -122,39 +129,43 @@ export class SimpleSlider {
     if (beforeUpdate) this.onSlideBeforeChangeListeners.push(beforeUpdate);
 
     this.navigationButtonsModule = createNavigationButtonsModule(this);
-    this.dotsBlockModule = createDotsBlockModule(this);
+    if (isShowNavigationButtons) {
+      const { element } = this.navigationButtonsModule.create(
+        navigationButtonClasses
+      );
+      insertElements(this.slider, element);
+    }
 
-    if (isDraggable) {
+    this.dotsBlockModule = createDotsBlockModule(this);
+    if (isShowDots) {
+      const { element, update } = this.dotsBlockModule.create();
+      insertElements(this.slider, element);
+      this.onSlideChangeListeners.push(update);
+    }
+
+    if (this.isDraggable) {
       createDragHandler(this.slider, {
         onDragSuccess: this.goToNextSlide,
       });
     }
-
-    if (isShowNavigationButtons) {
-      this.navigationButtonsModule.create({
-        leftButtonClass,
-        rightButtonClass,
-        buttonClasses,
-      });
-    }
-
-    if (isShowDots) {
-      const { update } = this.dotsBlockModule.create();
-      this.onSlideChangeListeners.push(update);
-    }
   }
 
   setCurrentSlide = (slideNumber: number): void => {
-    if (slideNumber === this.currentSlideIndex) return;
-    if (slideNumber < 0 || slideNumber > this.slidesCount - 1) return;
-    const savedSlideIndex = this.currentSlideIndex;
+    const {
+      currentSlideIndex: previousIndex,
+      slidesCount,
+      slider,
+      onSlideChangeListeners,
+    } = this;
+    if (slideNumber === previousIndex) return;
+    if (slideNumber < 0 || slideNumber > slidesCount - 1) return;
     this.currentSlideIndex = slideNumber;
-    const slides = this.slider.querySelectorAll(
+    const slides = slider.querySelectorAll(
       `.${WRAPPER_CLASS}:not(.${WRAPPER_LOOP_CLASS})`
     );
     setActiveElement(slides, this.currentSlideIndex, ACTIVE_CLASS);
-    this.onSlideChangeListeners.forEach((listener) =>
-      listener(this.currentSlideIndex, savedSlideIndex)
+    onSlideChangeListeners.forEach((listener) =>
+      listener(this.currentSlideIndex, previousIndex)
     );
   };
 
@@ -172,5 +183,3 @@ export class SimpleSlider {
 }
 
 window.SimpleSlider = SimpleSlider;
-
-

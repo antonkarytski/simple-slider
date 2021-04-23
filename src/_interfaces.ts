@@ -9,15 +9,16 @@ export interface ElementListener extends IndexListener {
 	element: HTMLElement | HTMLElement[];
 }
 
-export interface Props{
-	className?: string,
-	onClick?: (event?: MouseEvent) => unknown,
-}
-
-export type Component = (props:Props) => ElementListener;
 
 export type SliderModule = {
 	elementExists?: boolean;
 	create: (props?: unknown) => ElementListener;
 };
 
+
+export interface Props{
+	className?: string,
+	onClick?: (event?: MouseEvent) => unknown,
+}
+
+export type Component = (props:Props) => ElementListener;

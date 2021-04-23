@@ -39,7 +39,9 @@
 
 <script src="simple-slider.js"></script>
 <script>
- const slider = new SimpleSlider(".common-slider");
+ const slider = new SimpleSlider(".common-slider", {
+	buttonClasses: "first-slider-button"
+ });
  const slider2 = new SimpleSlider(".colored-slider", {
 	isLooped: false,
 	isDraggable: false,

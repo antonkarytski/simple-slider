@@ -58,3 +58,18 @@ body{
 	}
 }
 
+@media screen and (max-width: 500px){
+	body{
+		padding: 0;
+	}
+	.slider{
+		width: 100%;
+		border-radius: 0;
+	}
+	.common-slider{
+		.first-slider-button{
+			display: none;
+		}
+	}
+}
+

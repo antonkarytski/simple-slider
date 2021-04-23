@@ -78,7 +78,8 @@ $namespace: "_simple-slider";
 	position: absolute;
 	display: flex;
 	bottom: 30px;
-	margin: auto;
+	margin-left: 50%;
+	transform: translateX(-50%);
 	>div{
 		width: 15px;
 		min-width: 15px;

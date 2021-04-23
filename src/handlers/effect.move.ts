@@ -13,6 +13,8 @@ import { IndexListener, IndexSubscriber } from "../_interfaces";
 export type Options = {
   isLooped?: boolean;
   isDraggable?: boolean;
+  beforeOverloadTransition?: () => unknown;
+  afterOverloadTransition?: () => unknown;
 };
 
 export interface EffectHandlerInterface extends IndexListener {
@@ -35,9 +37,15 @@ export type EffectsList = {
 
 const moveEffectHandler: EffectsHandler = (
   slider,
-  { isLooped, isDraggable } = {}
+  {
+    isLooped,
+    isDraggable,
+    beforeOverloadTransition,
+    afterOverloadTransition,
+  } = {}
 ): EffectHandlerInterface => {
   let activeSlideIndex;
+  let isInOverload = false;
 
   const getSlides = (slider): HTMLElement[] => {
     return slider.querySelectorAll(`.${WRAPPER_CLASS}`);
@@ -56,6 +64,7 @@ const moveEffectHandler: EffectsHandler = (
     let slides;
     createDragHandler(slider, {
       onDragStart: () => {
+        if (isInOverload) return;
         [...slides] = getSlides(slider);
         firstSlide = slides[0] as HTMLElement;
         slideWidth = firstSlide.getBoundingClientRect().width;
@@ -88,7 +97,9 @@ const moveEffectHandler: EffectsHandler = (
       event.target instanceof HTMLElement &&
       event.target.classList.contains(ACTIVE_CLASS)
     ) {
+      isInOverload = false;
       moveSlideWithoutEffect(activeSlideIndex);
+      if(afterOverloadTransition) afterOverloadTransition()
       slider.removeEventListener("transitionend", afterTransitionHandler);
     }
   }
@@ -105,13 +116,16 @@ const moveEffectHandler: EffectsHandler = (
           return;
         })();
         if (overloadIndicate !== undefined) {
+          isInOverload = true;
           moveSlide(overloadIndicate);
+          if(beforeOverloadTransition) beforeOverloadTransition()
           slider.addEventListener("transitionend", afterTransitionHandler);
           return;
         }
       }
       moveSlide(activeSlideIndex, previousIndex);
     },
+
     prepare(activeIndex) {
       activeSlideIndex = activeIndex + Number(isLooped);
       if (isLooped) {
@@ -130,7 +144,7 @@ const moveEffectHandler: EffectsHandler = (
         slider.appendChild(firstElement);
       }
 
-      window.addEventListener("resize", () => moveSlide);
+      window.addEventListener("resize", () => moveSlide(activeSlideIndex));
       moveSlideWithoutEffect(activeSlideIndex);
     },
   };
